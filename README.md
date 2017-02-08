@@ -1,2 +1,2 @@
 # gamehost
-this is sleeping's gamehost.
+this is sleepingcat's gamehost.
