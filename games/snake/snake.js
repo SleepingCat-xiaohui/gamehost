@@ -13,7 +13,7 @@ game.States.main = function() {
 			game.scale.forcePortrait = true;
 			game.scale.refresh();
 		}
-		game.load.image('snake', 'assets/snake/snake.png');
+		game.load.image('snake', '/games/assets/snake/snake.png');
 	}
 	this.create = function() {
 		// init score
