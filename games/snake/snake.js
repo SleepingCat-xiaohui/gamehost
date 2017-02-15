@@ -98,7 +98,6 @@ game.States.main = function() {
 				if (Math.abs(diffX) < 20 && Math.abs(diffY) < 20) {
 					return false;
 				}
-				console.log(Math.abs(diffX) + '.' + Math.abs(diffY) + '.' + _this.derectionNow);
 				if (Math.abs(diffX) > Math.abs(diffY) && _this.derectionNow) {
 					if (diffX > 20) {
 						_this.derection = 2;
