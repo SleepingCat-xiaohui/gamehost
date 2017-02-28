@@ -1,5 +1,5 @@
 FROM nginx
 
-MAINTAINER YeTing "me@yeting.info"
+MAINTAINER Sleepingcat ""
 
 COPY . /usr/share/nginx/html
