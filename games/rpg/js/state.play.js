@@ -1,12 +1,11 @@
 // play
-var statePlay = function() {
-	this.gameType = 0;
-	this.map = null;
-	this.audio_bg = null;
-};
+var statePlay = function() {};
 statePlay.prototype = {
-	init: function(gameType) {
-		this.gameType = gameType;
+	init: function(startType) {
+		if (startType === 0) {
+			// new game transition animotion
+			game.state.start('transition', true, false, 1)
+		}
 	},
 	create: function() {
 		// this.audio_bg = game.add.audio('audio_bg3').play('', 0, 1, true);
@@ -24,28 +23,27 @@ statePlay.prototype = {
 		this.hero1.scale.setTo(0.71);
 		this.hero1.anchor.setTo(0.5);
 		game.physics.enable(this.hero1);
+		this.hero1.body.collideWorldBounds = true;
 		this.hero1.body.setSize(45, 45, 0, 10);
 		this.hero1.animations.add('left', [4, 5, 6, 7], 6, true);
 		this.hero1.animations.add('up', [8, 9, 10, 11], 6, true);
 		this.hero1.animations.add('right', [12, 13, 14, 15], 6, true);
 		this.hero1.animations.add('down', [0, 1, 2, 3], 6, true);
-
-		this.cuesor = game.input.keyboard.addKeys(Util.controlKeys);
 	},
 	update: function() {
 		game.physics.arcade.collide(this.hero1, this.layerBg);
 		game.physics.arcade.collide(this.hero1, this.layerUp);
 		this.hero1.body.velocity.setTo(0);
-		if (this.cuesor.up.isDown) {
+		if (Util.gameControl.up.isDown) {
 			this.hero1.body.velocity.y = -180;
 			this.hero1.animations.play('up');
-		} else if (this.cuesor.left.isDown) {
+		} else if (Util.gameControl.left.isDown) {
 			this.hero1.body.velocity.x = -180;
 			this.hero1.animations.play('left');
-		} else if (this.cuesor.right.isDown) {
+		} else if (Util.gameControl.right.isDown) {
 			this.hero1.body.velocity.x = 180;
 			this.hero1.animations.play('right');
-		} else if (this.cuesor.down.isDown) {
+		} else if (Util.gameControl.down.isDown) {
 			this.hero1.body.velocity.y = 180;
 			this.hero1.animations.play('down');
 		} else {

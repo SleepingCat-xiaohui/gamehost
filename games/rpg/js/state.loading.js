@@ -2,7 +2,7 @@
 var stateLoading = function() {};
 stateLoading.prototype = {
 	preload: function() {
-		var loadingSprite = game.add.image(game.width / 2 - 110, game.height / 2, 'loading');
+		var loadingSprite = game.add.image(game.width / 2 - 110, game.height / 2, 'loading_gif');
 		loadingSprite.anchor.setTo(0, 0.5);
 		game.load.setPreloadSprite(loadingSprite);
 

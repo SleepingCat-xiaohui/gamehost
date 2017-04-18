@@ -1,10 +1,9 @@
 // menu
 var stateMenu = function() {
-	this.gameType = 0; // new: 0, old: 1
+	this.startType = 0; // new: 0, old: 1
 	this.btn1 = null;
 	this.btn2 = null;
 	this.tip = null;
-	this.cursor = null;
 };
 stateMenu.prototype = {
 	create: function() {
@@ -30,22 +29,20 @@ stateMenu.prototype = {
 			fill: '#f00'
 		});
 		this.tip.anchor.setTo(0.5);
-
-		this.cursor = game.input.keyboard.addKeys(Util.controlKeys);
 	},
 	update: function() {
-		if (this.cursor.up.isDown) {
-			this.gameType = 0;
+		if (Util.gameControl.up.isDown) {
+			this.startType = 0;
 			this.btn1.fill = '#f00';
 			this.btn2.fill = '#fff';
 			this.tip.y = 250;
-		} else if (this.cursor.down.isDown) {
-			this.gameType = 1;
+		} else if (Util.gameControl.down.isDown) {
+			this.startType = 1;
 			this.btn1.fill = '#fff';
 			this.btn2.fill = '#f00';
 			this.tip.y = 300;
-		} else if (this.cursor.start.isDown) {
-			game.state.start('play', true, false, this.gameType);
+		} else if (Util.gameControl.start.isDown) {
+			game.state.start('play', true, false, this.startType);
 		}
 	}
 };
