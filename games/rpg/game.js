@@ -52,7 +52,6 @@ var stateMenu = function() {
 };
 stateMenu.prototype = {
 	create: function() {
-		var audio_bg = game.add.audio('audio_bg').play('', 0, 1, true);
 		var text = game.add.text(game.width / 2, 100, '名字还在起..', {
 			font: 'bold 50px Microsoft Yahei',
 			fill: '#fff'
@@ -99,12 +98,15 @@ stateMenu.prototype = {
 var statePlay = function() {
 	this.gameType = 0;
 	this.map = null;
+	this.audio_bg = null;
 };
 statePlay.prototype = {
 	init: function(gameType) {
 		this.gameType = gameType;
 	},
 	create: function() {
+		this.audio_bg = game.add.audio('audio_bg3').play('', 0, 1, true);
+
 		this.map = game.add.tilemap('homeMap');
 		this.map.addTilesetImage('Inside_A4', 'Inside_A4');
 		this.map.addTilesetImage('Inside_B', 'Inside_B');
