@@ -33,30 +33,30 @@ var GameData = {
 				}
 			},
 			npcs: [{
-					texture: 'Joy',
-					x: 13 * 32,
-					y: 30 * 32,
-					canAuto: true,
-					moveTime: 0,
-					minX: 13 * 32,
-					minY: 30 * 32,
-					maxX: 17 * 32,
-					maxY: 31 * 32,
-					animation: ['left'],
-					words: ['村民：天气不错~']
-				}
-				// , {
-				// 	texture: 'Katherine',
-				// 	x: 18 * 32,
-				// 	y: 30 * 32,
-				// 	canAuto: true,
-				// 	autoArea: {
-
-				// 	},
-				// 	animation: ['down'],
-				// 	words: ['村民：天气不错~']
-				// }
-			]
+				texture: 'Joy',
+				x: 13 * 32,
+				y: 30 * 32,
+				canAuto: true,
+				moveTime: 2000,
+				minX: 13 * 32,
+				minY: 30 * 32,
+				maxX: 17 * 32,
+				maxY: 31 * 32,
+				animation: ['left'],
+				words: ['村民：天气不错~']
+			}, {
+				texture: 'Katherine',
+				x: 19 * 32,
+				y: 19 * 32,
+				canAuto: true,
+				moveTime: 0,
+				minX: 18 * 32,
+				minY: 18 * 32,
+				maxX: 21 * 32,
+				maxY: 21 * 32,
+				animation: ['left'],
+				words: ['村民：天气不错~']
+			}]
 		},
 		WhiteAiliceHome: { // 怀特村 爱丽丝 家
 			width: 20 * 32,
@@ -119,7 +119,7 @@ var Util = {
 		var npcsData = layerData.npcs;
 		var npcs = game.add.group();
 		for (var key in npcsData) {
-			var hero = Util.addHero(game, GameData.heros[npcsData[key].texture], npcsData[key].x, npcsData[key].y, true);
+			var hero = Util.addHero(GameData.heros[npcsData[key].texture], npcsData[key].x, npcsData[key].y, true);
 			hero.play(npcsData[key].animation);
 			npcs.add(hero);
 		}
@@ -161,7 +161,7 @@ var Util = {
 		}, context);
 	},
 	// heros
-	addHero: function(game, key, x, y, isNPC) {
+	addHero: function(key, x, y, isNPC) {
 		var hero = game.add.sprite(x - 2, y - 12, key);
 		hero.scale.setTo(0.8);
 		game.physics.enable(hero);
@@ -228,22 +228,22 @@ var Util = {
 			}
 			npc.play(direction);
 
-			var tile1 = GameData.mapData.map.getTile(npcX / 32, npcY / 32, currentLayer.layerGroup.getBottom());
-			tile1.setCollision(true, true, true, true);
-			var tile2 = GameData.mapData.map.getTile((properties.x + 2) / 32, (properties.y + 12) / 32, currentLayer.layerGroup.getBottom());
-			tile2.setCollision(true, true, true, true);
+			npc.tile1 = GameData.mapData.map.getTile(npcX / 32, npcY / 32, currentLayer.layerGroup.getBottom());
+			npc.tile1.setCollision(true, true, true, true);
+			npc.tile2 = GameData.mapData.map.getTile((properties.x + 2) / 32, (properties.y + 12) / 32, currentLayer.layerGroup.getBottom());
+			npc.tile2.setCollision(true, true, true, true);
 
 			var tween = game.add.tween(npc);
 			tween.to(properties, 32000 * 4 / 180, null, true, 0, 0, false);
-			tween.onComplete.addOnce(function() {
-				tile1.setCollision(false, false, false, false);
-				tile2.setCollision(false, false, false, false);
+			tween.onComplete.addOnce(function(npc) {
+				npc.tile1.setCollision(false, false, false, false);
+				npc.tile2.setCollision(false, false, false, false);
 			}, this);
 			npcData.moveTime = game.time.now;
 		}
 	},
 	// talkBoard
-	addTalkBoard: function(game, text) {
+	addTalkBoard: function(text) {
 		var talkBoardGroup = game.add.group();
 		talkBoardGroup.alpha = 0;
 		talkBoardGroup.fixedToCamera = true;
@@ -288,8 +288,12 @@ var Util = {
 			}
 		};
 	},
+	// menuBoard
+	addMenuBoard: function() {
+
+	},
 	// gameControl
-	gameControl: function(game, controlKeys) {
+	gameControl: function(controlKeys) {
 		if (typeof this.gameControl === 'function') {
 			var cursor = game.input.keyboard.addKeys(controlKeys || GameData.controlKeys);
 			this.gameControl = cursor;

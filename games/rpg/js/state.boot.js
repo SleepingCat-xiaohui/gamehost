@@ -7,7 +7,7 @@ stateBoot.prototype = {
 		game.stage.disableVisibilityChange = true;
 
 		// init controlKey
-		Util.gameControl(game);
+		Util.gameControl();
 
 		game.load.image('loading_gif', 'assets/preloader.gif');
 	},

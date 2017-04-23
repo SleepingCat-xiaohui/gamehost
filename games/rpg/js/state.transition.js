@@ -1,4 +1,4 @@
-var game = new Phaser.Game(0, 0, Physic.CANVAS);
+var game = new Phaser.Game(0, 0, Phaser.CANVAS);
 // transition 过场动画
 // start
 statePlay.prototype.transition1 = function() {
@@ -17,7 +17,7 @@ statePlay.prototype.transition1 = function() {
 	transGroup.alpha = 0;
 	Util.enterLayer('WhiteAiliceHome', this);
 	if (!this.heroAimee) {
-		this.heroAimee = Util.addHero(game, GameData.heros.Aimee, 17 * 32, 3 * 32 + 16);
+		this.heroAimee = Util.addHero(GameData.heros.Aimee, 17 * 32, 3 * 32 + 16);
 	}
 	transGroup.add(GameData.mapData.currentLayer.layerGroup);
 	transGroup.add(GameData.mapData.currentLayer.doorLayer);

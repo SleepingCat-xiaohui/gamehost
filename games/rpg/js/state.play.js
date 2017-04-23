@@ -28,7 +28,7 @@ var statePlay = function() {
 };
 statePlay.prototype = {
 	init: function(startType) {
-		this.talkBoard = Util.addTalkBoard(game);
+		this.talkBoard = Util.addTalkBoard();
 		this.startType = startType;
 	},
 	create: function() {
@@ -248,7 +248,7 @@ statePlay.prototype = {
 	},
 	continueGame: function() {
 		Util.enterLayer('White', this);
-		this.heroAimee = Util.addHero(game, GameData.heros.Aimee, 10 * 32, 28 * 32);
+		this.heroAimee = Util.addHero(GameData.heros.Aimee, 10 * 32, 28 * 32);
 		game.camera.follow(this.heroAimee);
 		this.canUpdate = true;
 	},
