@@ -1,3 +1,4 @@
+var game = new Phaser.Game(0, 0, Phaser.CANVAS);
 // menu
 var stateMenu = function() {
 	this.startType = 0; // new: 0, old: 1
