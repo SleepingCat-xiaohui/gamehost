@@ -1,3 +1,4 @@
+var game = new Phaser.Game(0, 0, Physic.CANVAS);
 // transition 过场动画
 // start
 statePlay.prototype.transition1 = function() {

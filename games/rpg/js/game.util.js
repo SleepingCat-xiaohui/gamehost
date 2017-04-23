@@ -206,9 +206,9 @@ var Util = {
 				direcArr.splice(direcArr.indexOf('down'), 1);
 			}
 			if (game.physics.arcade.distanceBetween(npc, hero) === 32) {
-				if (npc.y < hero.y) {
+				if (npc.y > hero.y) {
 					direcArr.indexOf('up') !== -1 ? direcArr.splice(direcArr.indexOf('up'), 1) : '';
-				} else if (npc.y > hero.y) {
+				} else if (npc.y < hero.y) {
 					direcArr.indexOf('down') !== -1 ? direcArr.splice(direcArr.indexOf('down'), 1) : '';
 				} else if (npc.x < hero.x) {
 					direcArr.indexOf('right') !== -1 ? direcArr.splice(direcArr.indexOf('right'), 1) : '';
@@ -240,8 +240,6 @@ var Util = {
 				tile2.setCollision(false, false, false, false);
 			}, this);
 			npcData.moveTime = game.time.now;
-			// console.log((npc.x + 2) / 32); 13
-			// console.log((npc.y + 12) / 32); 30
 		}
 	},
 	// talkBoard
