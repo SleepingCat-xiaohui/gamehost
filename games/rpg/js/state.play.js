@@ -11,6 +11,8 @@ var statePlay = function() {
 	this.wordSpeed = 300;
 	// talkBoard group
 	this.talkBoard = null;
+	// menuBoard group
+
 	// hero 属性
 	this.heroDirection = '';
 	this.heroAimee = null;
@@ -18,17 +20,19 @@ var statePlay = function() {
 	// 当前场景类型 {0: moving, 1: talking, 2: menu, 3: fighting}
 	this.stateType = 0;
 	// controls
-	this.btnUpIsDowned = false;
-	this.btnDownIsDowned = false;
-	this.btnLeftIsDowned = false;
-	this.btnRightIsDowned = false;
-	this.btnAIsDowned = false;
-	this.btnBIsDowned = false;
+	this.btnUpIsDowned = 0;
+	this.btnDownIsDowned = 0;
+	this.btnLeftIsDowned = 0;
+	this.btnRightIsDowned = 0;
+	this.btnAIsDowned = 0;
+	this.btnBIsDowned = 0;
+	this.btnBetween = 200;
 	this.btnStartIsDowned = false;
 };
 statePlay.prototype = {
 	init: function(startType) {
 		this.talkBoard = Util.addTalkBoard();
+		this.menuBoard = Util.addMenuBoard();
 		this.startType = startType;
 	},
 	create: function() {
@@ -39,20 +43,26 @@ statePlay.prototype = {
 			this.continueGame();
 		}
 		console.log(GameData.mapData.currentLayer);
+		// game.world.bringToTop(this.menuBoard.group);
 	},
 	update: function() {
-		// map collide
+		// collide
 		var currentLayer = GameData.mapData.currentLayer;
 		currentLayer.layerGroup.forEach(function(layer) {
 			game.physics.arcade.collide(this.heroAimee, layer);
 			game.physics.arcade.collide(currentLayer.npcs, layer);
 		}, this);
-		game.physics.arcade.collide(this.heroAimee, currentLayer.npcs);
+		if (currentLayer.hasOwnProperty('npcs')) {
+			game.physics.arcade.collide(this.heroAimee, currentLayer.npcs);
+		}
 		game.physics.arcade.overlap(this.heroAimee, currentLayer.doorLayer, function(hero, tile) {
 			if (tile.index !== -1 && !this.layerChanging) {
 				this.canUpdate = false;
 				this.layerChanging = true;
-				Util.changeLayer(hero, tile, this);
+				if (Util.changeLayer(hero, tile, this) === false) {
+					this.canUpdate = true;
+					this.layerChanging = false;
+				}
 			}
 		}, null, this);
 		// change hero z-index
@@ -64,7 +74,8 @@ statePlay.prototype = {
 				} else {
 					game.world.bringToTop(this.heroAimee);
 				}
-				game.world.bringToTop(this.talkBoard);
+				game.world.bringToTop(this.talkBoard.group);
+				game.world.bringToTop(this.menuBoard.group);
 				break;
 			}
 		}
@@ -86,22 +97,22 @@ statePlay.prototype = {
 
 		// 禁止连按
 		if (!Util.gameControl.up.isDown) {
-			this.btnUpIsDowned = false;
+			this.btnUpIsDowned = 0;
 		}
 		if (!Util.gameControl.down.isDown) {
-			this.btnDownIsDowned = false;
+			this.btnDownIsDowned = 0;
 		}
 		if (!Util.gameControl.left.isDown) {
-			this.btnLeftIsDowned = false;
+			this.btnLeftIsDowned = 0;
 		}
 		if (!Util.gameControl.right.isDown) {
-			this.btnRightIsDowned = false;
+			this.btnRightIsDowned = 0;
 		}
 		if (!Util.gameControl.A.isDown) {
-			this.btnAIsDowned = false;
+			this.btnAIsDowned = 0;
 		}
 		if (!Util.gameControl.B.isDown) {
-			this.btnBIsDowned = false;
+			this.btnBIsDowned = 0;
 		}
 		if (!Util.gameControl.start.isDown) {
 			this.btnStartIsDowned = false;
@@ -154,81 +165,73 @@ statePlay.prototype = {
 			tween.onComplete.add(function() {
 				this.canUpdate = true;
 			}, this);
-		} else if (Util.gameControl.A.isDown && !this.btnAIsDowned) {
+		} else if (Util.gameControl.A.isDown && game.time.now > this.btnAIsDowned + this.btnBetween) {
 			// talk
-			this.btnAIsDowned = true;
+			this.btnAIsDowned = game.time.now;
 			// 当前为移动状态 判断 有没有 满足对话条件 的npc
-			var thisCanTalk = false;
-			for (var key in currentLayer.npcs.children) {
-				var npc = currentLayer.npcs.children[key];
-				if (game.physics.arcade.distanceBetween(npc, this.heroAimee) === 32) {
-					if (this.heroDirection === 'up' && npc.y < this.heroAimee.y) {
-						npc.play('down');
-						this.enterTlak(currentLayer, npc);
-						thisCanTalk = true;
-						break;
-					} else if (this.heroDirection === 'down' && npc.y > this.heroAimee.y) {
-						npc.play('up');
-						this.enterTlak(currentLayer, npc);
-						thisCanTalk = true;
-						break;
-					} else if (this.heroDirection === 'left' && npc.x < this.heroAimee.x) {
-						npc.play('right');
-						this.enterTlak(currentLayer, npc);
-						thisCanTalk = true;
-						break;
-					} else if (this.heroDirection === 'right' && npc.x > this.heroAimee.x) {
-						npc.play('left');
-						this.enterTlak(currentLayer, npc);
-						thisCanTalk = true;
+			if (currentLayer.hasOwnProperty('npcs')) {
+				for (var key in currentLayer.npcs.children) {
+					var npc = currentLayer.npcs.children[key];
+					if (game.physics.arcade.distanceBetween(npc, this.heroAimee) === 32) {
+						if (this.heroDirection === 'up' && npc.y < this.heroAimee.y) {
+							npc.play('down');
+						} else if (this.heroDirection === 'down' && npc.y > this.heroAimee.y) {
+							npc.play('up');
+						} else if (this.heroDirection === 'left' && npc.x < this.heroAimee.x) {
+							npc.play('right');
+						} else if (this.heroDirection === 'right' && npc.x > this.heroAimee.x) {
+							npc.play('left');
+						} else {
+							continue;
+						}
+						this.stateType = 1;
+						var npcIndex = currentLayer.npcs.getChildIndex(npc);
+						var npcWord = currentLayer.npcsDatas[npcIndex].words;
+						this.talkBoard.setWord(npcWord);
+						this.talkBoard.toggleBoard();
 						break;
 					}
 				}
 			}
 		} else if (Util.gameControl.start.isDown && !this.btnStartIsDowned) {
-			this.btnStartIsDowned = true;
-			this.stateType = 2;
+			// this.btnStartIsDowned = true;
+			// this.stateType = 2;
+			// this.menuBoard.toggleBoard();
 		}
 	},
-	enterTlak: function(currentLayer, npc) {
-		this.stateType = 1;
-		var npcIndex = currentLayer.npcs.getChildIndex(npc);
-		var npcWord = currentLayer.npcsDatas[npcIndex].words;
-		this.talkBoard.setWord(npcWord);
-		this.talkBoard.toggleBoard();
-	},
 	updateStateTalking: function(currentLayer) {
-		if (Util.gameControl.A.isDown && !this.btnAIsDowned) {
-			this.btnAIsDowned = true;
+		if (Util.gameControl.A.isDown && game.time.now > this.btnAIsDowned + this.btnBetween) {
+			this.btnAIsDowned = game.time.now;
 			if (!this.talkBoard.nextWord()) {
 				this.stateType = 0;
 			}
-		} else if (Util.gameControl.B.isDown && !this.btnBIsDowned) {
-			this.btnBIsDowned = true;
+		} else if (Util.gameControl.B.isDown && game.time.now > this.btnBIsDowned + this.btnBetween) {
+			this.btnBIsDowned = game.time.now;
 			this.talkBoard.toggleBoard();
 			this.stateType = 0;
 		}
 	},
 	updateStateMenu: function(currentLayer) {
-		if (Util.gameControl.up.isDown && !this.btnUpIsDowned) {
-			this.btnUpIsDowned = true;
-			console.log('up');
-		} else if (Util.gameControl.down.isDown && !this.btnDownIsDowned) {
-			this.btnDownIsDowned = true;
-			console.log('down');
-		} else if (Util.gameControl.left.isDown && !this.btnLeftIsDowned) {
-			this.btnLeftIsDowned = true;
-			console.log('left');
-		} else if (Util.gameControl.right.isDown && !this.btnRightIsDowned) {
-			this.btnRightIsDowned = true;
-			console.log('right');
-		} else if (Util.gameControl.A.isDown && !this.btnAIsDowned) {
-			this.btnAIsDowned = true;
-			console.log('A');
-		} else if (Util.gameControl.B.isDown && !this.btnBIsDowned) {
-			this.btnBIsDowned = true;
-			console.log('B');
-			this.stateType = 0;
+		if (Util.gameControl.up.isDown && game.time.now > this.btnUpIsDowned + this.btnBetween) {
+			this.btnUpIsDowned = game.time.now;
+			this.menuBoard.receiveControl('Up');
+		} else if (Util.gameControl.down.isDown && game.time.now > this.btnDownIsDowned + this.btnBetween) {
+			this.btnDownIsDowned = game.time.now;
+			this.menuBoard.receiveControl('Down');
+		} else if (Util.gameControl.left.isDown && game.time.now > this.btnLeftIsDowned + this.btnBetween) {
+			this.btnLeftIsDowned = game.time.now;
+			this.menuBoard.receiveControl('Left');
+		} else if (Util.gameControl.right.isDown && game.time.now > this.btnRightIsDowned + this.btnBetween) {
+			this.btnRightIsDowned = game.time.now;
+			this.menuBoard.receiveControl('Right');
+		} else if (Util.gameControl.A.isDown && game.time.now > this.btnAIsDowned + this.btnBetween) {
+			this.btnAIsDowned = game.time.now;
+			this.menuBoard.receiveControl('A');
+		} else if (Util.gameControl.B.isDown && game.time.now > this.btnBIsDowned + this.btnBetween) {
+			this.btnBIsDowned = game.time.now;
+			if (this.menuBoard.receiveControl('B')) {
+				this.stateType = 0;
+			}
 		}
 	},
 	updateStateFighting: function(currentLayer) {

@@ -14,7 +14,16 @@ var GameData = {
 		currentLayer: {},
 		layers: {},
 		World: { // 世界地图
-
+			width: 40 * 32,
+			height: 40 * 32,
+			layers: [
+				['World_bg', 3974],
+				['World_bg2', 4355, 4356, 4372],
+				['World_door', 4423],
+			],
+			doors: {
+				4423: ['White', 6, 19]
+			}
 		},
 		White: { // 怀特村
 			width: 40 * 32,
@@ -25,9 +34,9 @@ var GameData = {
 				['White_door', 2721, 2769, 2788, 3541],
 			],
 			doors: {
-				2721: ['World', 0, 0],
-				2769: ['World', 0, 0],
-				2788: ['World', 0, 0],
+				2721: ['World', 10, 32],
+				2769: ['World', 10, 32],
+				2788: ['World', 10, 32],
 				3541: {
 					1027: ['WhiteAiliceHome', 11, 13]
 				}
@@ -91,7 +100,7 @@ var GameData = {
 // util
 var Util = {
 	// map layers
-	initLayer: function(targetLayer, context) {
+	initLayer: function(targetLayer) {
 		// 先不做缓存处理,每次新建layer
 		// destory layer
 		if (GameData.mapData.currentLayer.layerName) {
@@ -116,36 +125,57 @@ var Util = {
 		}
 		game.world.resize(layerData.width, layerData.height);
 		// init npc
-		var npcsData = layerData.npcs;
-		var npcs = game.add.group();
-		for (var key in npcsData) {
-			var hero = Util.addHero(GameData.heros[npcsData[key].texture], npcsData[key].x, npcsData[key].y, true);
-			hero.play(npcsData[key].animation);
-			npcs.add(hero);
+		if (layerData.hasOwnProperty('npcs')) {
+			var npcsData = layerData.npcs;
+			var npcs = game.add.group();
+			for (var key in npcsData) {
+				var hero = Util.addHero(GameData.heros[npcsData[key].texture], npcsData[key].x, npcsData[key].y, true);
+				hero.play(npcsData[key].animation);
+				npcs.add(hero);
+			}
+			GameData.mapData.currentLayer.npcs = npcs;
+			GameData.mapData.currentLayer.npcsDatas = npcsData.slice(0);
 		}
 		GameData.mapData.currentLayer.layerGroup = layerGroup;
 		GameData.mapData.currentLayer.doorLayer = doorLayer;
-		GameData.mapData.currentLayer.npcs = npcs;
-		GameData.mapData.currentLayer.npcsDatas = npcsData.slice(0);
 		GameData.mapData.currentLayer.layerName = targetLayer;
 	},
-	enterLayer: function(targetLayer, context) {
-		Util.initLayer(targetLayer, context);
+	enterLayer: function(targetLayer) {
+		Util.initLayer(targetLayer);
 	},
 	changeLayer: function(hero, tile, context) {
 		var doors = GameData.mapData[GameData.mapData.currentLayer.layerName].doors;
 		var targetLayer = doors[tile.index];
+		if (!(targetLayer instanceof Array)) {
+			var tileX = tile.worldX / 32;
+			var tileY = tile.worldY / 32;
+			targetLayer = targetLayer['' + tileX + tileY];
+		}
+		if (!targetLayer) {
+			return false;
+		}
+
+		var collideTile = null;
+		if (tile.layer.name.indexOf('World') !== -1) {
+			var currentLayer = GameData.mapData.currentLayer;
+			if (context.heroDirection === 'up') {
+				collideTile = GameData.mapData.map.getTile(tile.worldX / 32, tile.worldY / 32 - 1, currentLayer.layerGroup.getBottom());
+			} else if (context.heroDirection === 'down') {
+				collideTile = GameData.mapData.map.getTile(tile.worldX / 32, tile.worldY / 32 + 1, currentLayer.layerGroup.getBottom());
+			} else if (context.heroDirection === 'left') {
+				collideTile = GameData.mapData.map.getTile(tile.worldX / 32 - 1, tile.worldY / 32, currentLayer.layerGroup.getBottom());
+			} else if (context.heroDirection === 'right') {
+				collideTile = GameData.mapData.map.getTile(tile.worldX / 32 + 1, tile.worldY / 32, currentLayer.layerGroup.getBottom());
+			}
+			collideTile.setCollision(true, true, true, true);
+		}
 
 		var tween = game.add.tween(game.world);
 		tween.to({
 			alpha: 0
 		}, 300, null, true, 300, 0, false);
 		tween.onComplete.addOnce(function() {
-			if (!(targetLayer instanceof Array)) {
-				var tileX = tile.worldX / 32;
-				var tileY = tile.worldY / 32;
-				targetLayer = targetLayer['' + tileX + tileY];
-			}
+			collideTile ? collideTile.setCollision(false, false, false, false) : '';
 			Util.enterLayer(targetLayer[0], context);
 			hero.reset(targetLayer[1] * 32 - 2, targetLayer[2] * 32 - 12);
 			game.world.bringToTop(hero);
@@ -243,7 +273,7 @@ var Util = {
 		}
 	},
 	// talkBoard
-	addTalkBoard: function(text) {
+	addTalkBoard: function() {
 		var talkBoardGroup = game.add.group();
 		talkBoardGroup.alpha = 0;
 		talkBoardGroup.fixedToCamera = true;
@@ -265,7 +295,7 @@ var Util = {
 		talkBoardGroup.add(word2);
 		// obj
 		return {
-			talkBoardGroup: talkBoardGroup,
+			group: talkBoardGroup,
 			board: board,
 			words: [word, word2],
 			setWord: function(text) {
@@ -278,19 +308,147 @@ var Util = {
 				return false;
 			},
 			toggleBoard: function() {
-				if (this.talkBoardGroup.alpha === 1) {
-					this.talkBoardGroup.alpha = 0;
-					this.setWord('', '');
+				if (this.group.alpha === 1) {
+					this.group.alpha = 0;
 				} else {
-					game.world.bringToTop(this.talkBoardGroup);
-					this.talkBoardGroup.alpha = 1;
+					game.world.bringToTop(this.group);
+					this.group.alpha = 1;
 				}
 			}
 		};
 	},
 	// menuBoard
 	addMenuBoard: function() {
+		var group = game.add.group();
+		group.alpha = 0;
+		group.fixedToCamera = true;
 
+		// menuGroup
+		var menuGroup = game.add.group(group);
+		menuGroup.alpha = 0;
+
+		var menuBoard = game.add.image(game.width - 10, 10, 'talkboard');
+		menuBoard.scale.setTo(0.5, 1.2);
+		menuBoard.angle = 90;
+		menuBoard.alpha = 0.4;
+		menuGroup.add(menuBoard);
+
+		var menuNav = ['物  品', '法  术', '装  备', '状  态', '存  储'];
+		for (var i = 0; i < menuNav.length; i++) {
+			menuNav[i] = game.add.text(game.width - 70, 15 + i * 24, menuNav[i], {
+				font: 'bold 18px microsoft yahei',
+				fill: '#fff'
+			}, menuGroup);
+		}
+
+		// goodMenuGroup
+		var goodMenuGroup = game.add.group(group);
+		goodMenuGroup.alpha = 1;
+		// magicMenuGroup
+		var magicMenuGroup = game.add.group(group);
+		magicMenuGroup.alpha = 0;
+		// equipMenuGroup
+		var equipMenuGroup = game.add.group(group);
+		equipMenuGroup.alpha = 0;
+		// statusMenuGroup
+		var statusMenuGroup = game.add.group(group);
+		statusMenuGroup.alpha = 0;
+
+		return {
+			canUpdate: true,
+			group: group,
+			currentMenu: 0, //当前菜单类型
+			menuNav: menuNav,
+			menuGroup: menuGroup,
+			menuCurrentIndex: 0, //menuGroup index
+			goodMenuGroup: goodMenuGroup,
+			magicMenuGroup: magicMenuGroup,
+			equipMenuGroup: equipMenuGroup,
+			statusMenuGroup: statusMenuGroup,
+			receiveControl: function(key) {
+				if (this.canUpdate) {
+					return this['control' + key + this.currentMenu]();
+				}
+			},
+			toggleBoard: function() {
+				if (this.group.alpha === 1) {
+					this.group.alpha = 0;
+					this.group.setAll('alpha', 0);
+				} else {
+					game.world.bringToTop(this.group);
+					this.menuCurrentIndex = 0;
+					this['renderMenu' + this.currentMenu]();
+					this.menuGroup.alpha = 1;
+					this.group.alpha = 1;
+				}
+			},
+			controlUp0: function() {
+				if (this.menuCurrentIndex === 0) {
+					this.menuCurrentIndex = 4;
+				} else {
+					this.menuCurrentIndex = (this.menuCurrentIndex - 1) % 5;
+				}
+				this['renderMenu' + this.currentMenu]();
+			},
+			controlDown0: function() {
+				if (this.menuCurrentIndex === 4) {
+					this.menuCurrentIndex = 0;
+				} else {
+					this.menuCurrentIndex = (this.menuCurrentIndex + 1) % 5;
+				}
+				this['renderMenu' + this.currentMenu]();
+			},
+			controlLeft0: function() {},
+			controlRight0: function() {},
+			controlA0: function() {
+				this.currentMenu = this.menuCurrentIndex + 1;
+				this['renderMenu' + this.currentMenu]();
+			},
+			controlB0: function() {
+				//return whether leave menu
+				this.toggleBoard();
+				return true;
+			},
+			renderMenu0: function() {
+				var i = menuNav.length;
+				while (i--) {
+					if (i === this.menuCurrentIndex) {
+						menuNav[i].fill = '#00f';
+					} else {
+						menuNav[i].fill = '#fff';
+					}
+				}
+			},
+			controlUp1: function() {
+
+			},
+			controlDown1: function() {
+
+			},
+			controlLeft1: function() {
+
+			},
+			controlRight1: function() {
+
+			},
+			controlA1: function() {
+
+			},
+			controlB1: function() {
+
+			},
+			renderMenu1: function() {
+				this.menuGroup.alpha = 0;
+				this.canUpdate = false;
+				var tween = game.add.tween(game.world);
+				tween.to({
+					alpha: 0
+				}, 300, null, true, 0, 0, false);
+				tween.onComplete.addOnce(function() {
+
+				}, this);
+			}
+		};
 	},
 	// gameControl
 	gameControl: function(controlKeys) {

@@ -38,7 +38,7 @@ stateLoading.prototype = {
 		GameData.mapData.map = game.add.tilemap('mapData');
 		GameData.mapData.map.addTilesetImage('map', 'mapSet');
 
-		game.state.start('menu');
-		// game.state.start('play');
+		// game.state.start('menu');
+		game.state.start('play', true, false, 1);
 	}
 };
