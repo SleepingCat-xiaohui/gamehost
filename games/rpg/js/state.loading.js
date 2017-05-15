@@ -14,9 +14,11 @@ stateLoading.prototype = {
 		// heros
 		game.load.spritesheet('CP001AB', 'assets/hero/CP001AB.png', 45, 60);
 		game.load.spritesheet('CP002AB', 'assets/hero/CP002AB.png', 45, 60);
-
 		game.load.spritesheet('CP005AB', 'assets/hero/CP005AB.png', 45, 60);
 		game.load.spritesheet('CP006AB', 'assets/hero/CP006AB.png', 45, 60);
+
+		// monsters
+		game.load.spritesheet('CP707AA', 'assets/hero/CP707AA.png', 110, 110);
 
 		// talkboard
 		game.load.image('talkboard', 'assets/talkboard.png');

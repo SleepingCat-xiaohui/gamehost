@@ -8,12 +8,15 @@ var GameData = {
 		Joy: 'CP005AB', // 乔伊
 		Katherine: 'CP006AB' // 凯瑟琳
 	},
+	monsters: {
+		dragon: 'CP707AA'
+	},
 	audios: [], // audios
 	mapData: {
 		map: null,
 		currentLayer: {},
-		layers: {},
 		World: { // 世界地图
+			monster: true,
 			width: 40 * 32,
 			height: 40 * 32,
 			layers: [
@@ -103,11 +106,13 @@ var Util = {
 	initLayer: function(targetLayer) {
 		// 先不做缓存处理,每次新建layer
 		// destory layer
-		if (GameData.mapData.currentLayer.layerName) {
-			GameData.mapData.currentLayer.layerGroup.destroy();
-			GameData.mapData.currentLayer.doorLayer.destroy();
-			GameData.mapData.currentLayer.npcs.destroy();
-			GameData.mapData.currentLayer.npcsDatas = [];
+		var currentLayer = GameData.mapData.currentLayer;
+		if (currentLayer.layerName) {
+			currentLayer.layerGroup.destroy();
+			currentLayer.doorLayer.destroy();
+			currentLayer.npcs.destroy();
+			currentLayer.npcsDatas = [];
+			currentLayer.monster = false;
 		}
 		// init layer
 		var layerGroup = game.add.group();
@@ -133,12 +138,17 @@ var Util = {
 				hero.play(npcsData[key].animation);
 				npcs.add(hero);
 			}
-			GameData.mapData.currentLayer.npcs = npcs;
-			GameData.mapData.currentLayer.npcsDatas = npcsData.slice(0);
+			currentLayer.npcs = npcs;
+			currentLayer.npcsDatas = npcsData.slice(0);
 		}
-		GameData.mapData.currentLayer.layerGroup = layerGroup;
-		GameData.mapData.currentLayer.doorLayer = doorLayer;
-		GameData.mapData.currentLayer.layerName = targetLayer;
+		if (layerData.monster) {
+			currentLayer.monster = true;
+		} else {
+			currentLayer.monster = false;
+		}
+		currentLayer.layerGroup = layerGroup;
+		currentLayer.doorLayer = doorLayer;
+		currentLayer.layerName = targetLayer;
 	},
 	enterLayer: function(targetLayer) {
 		Util.initLayer(targetLayer);
@@ -155,6 +165,7 @@ var Util = {
 			return false;
 		}
 
+		// world 切换地图时 防止 穿透
 		var collideTile = null;
 		if (tile.layer.name.indexOf('World') !== -1) {
 			var currentLayer = GameData.mapData.currentLayer;
@@ -170,21 +181,15 @@ var Util = {
 			collideTile.setCollision(true, true, true, true);
 		}
 
-		var tween = game.add.tween(game.world);
-		tween.to({
-			alpha: 0
-		}, 300, null, true, 300, 0, false);
-		tween.onComplete.addOnce(function() {
+		game.camera.fade(0x000000, 600);
+		game.camera.onFadeComplete.addOnce(function() {
 			collideTile ? collideTile.setCollision(false, false, false, false) : '';
 			Util.enterLayer(targetLayer[0], context);
 			hero.reset(targetLayer[1] * 32 - 2, targetLayer[2] * 32 - 12);
 			game.world.bringToTop(hero);
 			game.camera.follow(hero);
-			tween = game.add.tween(game.world);
-			tween.to({
-				alpha: 1
-			}, 300, null, true, 300, 0, false);
-			tween.onComplete.addOnce(function() {
+			game.camera.flash(0x000000, 600);
+			game.camera.onFlashComplete.addOnce(function() {
 				context.canUpdate = true;
 				context.layerChanging = false;
 			}, context);

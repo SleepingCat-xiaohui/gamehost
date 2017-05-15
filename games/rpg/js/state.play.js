@@ -5,18 +5,19 @@ var statePlay = function() {
 	this.canUpdate = false;
 	this.layerChanging = false;
 	this.startType = -1;
-	// this.tweenSpeed = 800;
-	// this.wordSpeed = 3000;
-	this.tweenSpeed = 300;
-	this.wordSpeed = 300;
+	this.tweenSpeed = 800;
+	this.wordSpeed = 3000;
+	// this.tweenSpeed = 300;
+	// this.wordSpeed = 300;
 	// talkBoard group
 	this.talkBoard = null;
 	// menuBoard group
-
+	this.menuBoard = null;
 	// hero 属性
 	this.heroDirection = '';
 	this.heroAimee = null;
 	this.heroAilice = null;
+	this.isMoving = false;
 	// 当前场景类型 {0: moving, 1: talking, 2: menu, 3: fighting}
 	this.stateType = 0;
 	// controls
@@ -28,6 +29,13 @@ var statePlay = function() {
 	this.btnBIsDowned = 0;
 	this.btnBetween = 200;
 	this.btnStartIsDowned = false;
+	// fighting time
+	this.fightTime = 0;
+	this.fightTimeBetween = 6000;
+	this.fightPosition = null;
+	this.step = 0;
+	this.monsterStep = 8;
+	this.canStep = true;
 };
 statePlay.prototype = {
 	init: function(startType) {
@@ -43,7 +51,6 @@ statePlay.prototype = {
 			this.continueGame();
 		}
 		console.log(GameData.mapData.currentLayer);
-		// game.world.bringToTop(this.menuBoard.group);
 	},
 	update: function() {
 		// collide
@@ -78,6 +85,11 @@ statePlay.prototype = {
 				game.world.bringToTop(this.menuBoard.group);
 				break;
 			}
+		}
+
+		// if monster
+		if (currentLayer.monster && this.canStep) {
+			// this.addStep();
 		}
 
 		if (!this.canUpdate) {
@@ -119,53 +131,68 @@ statePlay.prototype = {
 		}
 	},
 	updateStateMoving: function(currentLayer) {
-		this.heroAimee.body.velocity.setTo(0);
-		if (Util.gameControl.up.isDown && (this.heroAimee.x + 2) % 32 === 0) {
-			this.heroAimee.body.velocity.y = -180;
+		if (Util.gameControl.up.isDown && !this.isMoving) {
+			this.isMoving = true;
 			this.heroDirection = 'up';
 			this.heroAimee.animations.play('up');
-		} else if (Util.gameControl.left.isDown && (this.heroAimee.y + 12) % 32 === 0) {
-			this.heroAimee.body.velocity.x = -180;
+		} else if (Util.gameControl.left.isDown && !this.isMoving) {
+			this.isMoving = true;
 			this.heroDirection = 'left';
 			this.heroAimee.animations.play('left');
-		} else if (Util.gameControl.right.isDown && (this.heroAimee.y + 12) % 32 === 0) {
-			this.heroAimee.body.velocity.x = 180;
+		} else if (Util.gameControl.right.isDown && !this.isMoving) {
+			this.isMoving = true;
 			this.heroDirection = 'right';
 			this.heroAimee.animations.play('right');
-		} else if (Util.gameControl.down.isDown && (this.heroAimee.x + 2) % 32 === 0) {
-			this.heroAimee.body.velocity.y = 180;
+		} else if (Util.gameControl.down.isDown && !this.isMoving) {
+			this.isMoving = true;
 			this.heroDirection = 'down';
 			this.heroAimee.animations.play('down');
-		} else if ((this.heroAimee.x + 2) % 32 || (this.heroAimee.y + 12) % 32) {
-			this.canUpdate = false;
-			var x = this.heroAimee.x + 2;
-			var y = this.heroAimee.y + 12;
-			var properties = {
-				x: x,
-				y: y
-			};
-			var duration = 1000;
-			if (this.heroDirection === 'up') {
-				properties.y = Math.floor(y / 32) * 32;
-				duration *= (y - properties.y) / 180;
-			} else if (this.heroDirection === 'down') {
-				properties.y = Math.ceil(y / 32) * 32;
-				duration *= (properties.y - y) / 180;
-			} else if (this.heroDirection === 'left') {
-				properties.x = Math.floor(x / 32) * 32;
-				duration *= (x - properties.x) / 180;
-			} else if (this.heroDirection === 'right') {
-				properties.x = Math.ceil(x / 32) * 32;
-				duration *= (properties.x - x) / 180;
+		}
+		if (this.isMoving) {
+			switch (this.heroDirection) {
+				case 'up':
+					this.heroAimee.y -= 4;
+					if ((this.heroAimee.y + 12) % 32 === 0) {
+						this.isMoving = false;
+						this.heroDirection = '';
+						console.log(++this.step);
+					}
+					break;
+				case 'down':
+					this.heroAimee.y += 4;
+					if ((this.heroAimee.y + 12) % 32 === 0) {
+						this.isMoving = false;
+						this.heroDirection = '';
+						console.log(++this.step);
+					}
+					break;
+				case 'left':
+					this.heroAimee.x -= 4;
+					if ((this.heroAimee.x + 2) % 32 === 0) {
+						this.isMoving = false;
+						this.heroDirection = '';
+						console.log(++this.step);
+					}
+					break;
+				case 'right':
+					console.log(this.heroAimee.x + 2);
+					this.heroAimee.x = Number((this.heroAimee.x + 3.2).toFixed(1));
+					console.log(this.heroAimee.x + 2);
+					if ((this.heroAimee.x + 2) % 32 === 0) {
+						this.isMoving = false;
+						this.heroDirection = '';
+						if (++this.step === this.monsterStep) {
+							// this.isMoving = true;
+							this.step = 0;
+							console.log('monster!!!');
+						}
+					}
+					break;
 			}
-			properties.x -= 2;
-			properties.y -= 12;
-			var tween = game.add.tween(this.heroAimee);
-			tween.to(properties, duration, null, true, 0, 0, false);
-			tween.onComplete.add(function() {
-				this.canUpdate = true;
-			}, this);
-		} else if (Util.gameControl.A.isDown && game.time.now > this.btnAIsDowned + this.btnBetween) {
+		}
+
+
+		if (Util.gameControl.A.isDown && game.time.now > this.btnAIsDowned + this.btnBetween) {
 			// talk
 			this.btnAIsDowned = game.time.now;
 			// 当前为移动状态 判断 有没有 满足对话条件 的npc
